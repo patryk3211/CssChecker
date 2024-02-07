@@ -1,0 +1,23 @@
+a {
+  background-color: #eee;
+}
+
+#unique_element {
+  background-color: #fff;
+  color: #234;
+  margin: 0;
+}
+
+.class_element {
+  padding: 8px;
+}
+
+b, i {
+  color: #f00;
+}
+
+li {
+  background-color: rgb(52, 12, 6);
+  margin: 12px 52px 66px 2px;
+}
+

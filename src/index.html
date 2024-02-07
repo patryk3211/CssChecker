@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sprawdzacz CSS</title>
+    <style>
+      #template, #input {
+        float: left;
+      }
+      #template {
+        margin-right: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Sprawdzacz CSS</h1>
+    <h2>Opis</h2>
+    <p>
+      Program ten działa szukając różnic w stylach przypisanych do różnych elementów.
+      Aby porównywanie działało niezależnie od różnic w nazwach oraz sposobach nadawania styli
+      Należy dokonać kilku założeń:
+      <ol>
+        <li>Id lub klasy przypisane są do div-ów</li>
+        <li>Klasy w dokumencie mogą być użyte <b>tylko raz</b></li>
+        <li>Nie liczy się kolejność elementów w dokumencie</li>
+      </ol>
+    </p>
+    <hr />
+    <h2>Działanie</h2>
+    <p>
+      Aby móc w łatwy sposób wyszukiwać różnice w stylach elementów pliki CSS są przetwarzane w graf.
+    </p>
+    <hr />
+    <h2>Demo</h2>
+    <form>
+      <div id="template">
+        <h3>Wzór CSS</h3>
+        <textarea rows="32" cols="60">
+a {
+  background-color: #eee;
+}
+
+#element_id {
+  background-color: #fff;
+  color: #234;
+  margin: 0;
+}
+
+.element_class {
+  padding: 8px;
+}
+
+b, i {
+  color: #f00;
+}</textarea>
+      </div>
+      <div id="input">
+        <h3>CSS do sprawdzenia</h3>
+        <textarea rows="32" cols="60"></textarea>
+      </div>
+      <div style="clear: both"></div>
+    </form>
+  </body>
+</html>
+
