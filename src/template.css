@@ -14,6 +14,7 @@ a {
 
 b, i {
   color: #f00;
+  border-width: 2px;
 }
 
 li {
@@ -21,3 +22,6 @@ li {
   margin: 12px 52px 66px 2px;
 }
 
+#table td:nth-child(1) {
+  padding: 4px;
+}

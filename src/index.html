@@ -5,13 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Sprawdzacz CSS</title>
     <style>
-      #template, #input {
+      .left {
         float: left;
       }
       #template {
         margin-right: 20px;
       }
+      #response {
+        width: 400px;
+        margin: 63px 0 0 40px;
+      }
+      #submit {
+        display: block;
+        width: 100%;
+      }
+      #response h3 {
+        text-align: center;
+      }
+
+      #responsebox {
+        padding: 4px;
+        border: 1px solid black;
+      }
     </style>
+    <script src="script.js"></script> 
   </head>
   <body>
     <h1>Sprawdzacz CSS</h1>
@@ -19,7 +36,7 @@
     <p>
       Program ten działa szukając różnic w stylach przypisanych do różnych elementów.
       Aby porównywanie działało niezależnie od różnic w nazwach oraz sposobach nadawania styli
-      Należy dokonać kilku założeń:
+      dokonywane jest kilka założeń:
       <ol>
         <li>Id lub klasy przypisane są do div-ów</li>
         <li>Klasy w dokumencie mogą być użyte <b>tylko raz</b></li>
@@ -29,35 +46,84 @@
     <hr />
     <h2>Działanie</h2>
     <p>
-      Aby móc w łatwy sposób wyszukiwać różnice w stylach elementów pliki CSS są przetwarzane w graf.
+      Aby móc w łatwy sposób wyszukiwać różnice w stylach elementów pliki CSS są interpretowane
+      i przetwarzane na listę selektorów z przypisanymi do nich stylami. Pozwala to na różne
+      sposoby oraz kolejność deklaracji bloków styli.
     </p>
     <hr />
     <h2>Demo</h2>
-    <form>
-      <div id="template">
+    <form id="demoform">
+      <div class="left" id="template">
         <h3>Wzór CSS</h3>
-        <textarea rows="32" cols="60">
+        <textarea rows="32" cols="60" name="template">
 a {
   background-color: #eee;
 }
 
-#element_id {
+#unique_element {
   background-color: #fff;
   color: #234;
   margin: 0;
 }
 
-.element_class {
+.class_element {
   padding: 8px;
 }
 
 b, i {
   color: #f00;
-}</textarea>
+  border-width: 2px;
+}
+
+li {
+  background-color: rgb(52, 12, 6);
+  margin: 12px 52px 66px 2px;
+}
+
+#table td:nth-child(1) {
+  padding: 4px;
+}
+</textarea>
       </div>
-      <div id="input">
+      <div class="left" id="input">
         <h3>CSS do sprawdzenia</h3>
-        <textarea rows="32" cols="60"></textarea>
+        <textarea rows="32" cols="60" name="code">
+b {
+  color: #f00;
+  border-width: 2px;
+}
+
+i {
+  color: #0f0;
+  border-width: 2px;
+}
+
+.a_different_name_and_a_class {
+  background-color: #fff;
+  color: #253;
+  margin: 0;
+}
+
+#this_ones_a_class_now {
+  padding: 8px;
+}
+
+li {
+  background-color: rgb(52, 12, 6);
+  margin-top: 12px;
+  margin-right: 52px;
+  margin-bottom: 66px;
+  margin-left: 2px;
+}
+</textarea>
+      </div>
+      <div id="response" class="left">
+        <input id="submit" type="button" value="Porównaj CSS" onclick="check_css()" />
+        <h3>Odpowiedź serwera</h3>
+        <div id="responsebox">
+          <ul>
+          </ul>
+        </div>
       </div>
       <div style="clear: both"></div>
     </form>
