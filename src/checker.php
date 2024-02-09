@@ -1,6 +1,7 @@
 <?php
 // Importowanie bibliotek
 require __DIR__ . '/../vendor/autoload.php';
+
 use Sabberworm\CSS\Parser;
 use Sabberworm\CSS\Settings;
 use Sabberworm\CSS\Parsing\SourceException;
@@ -9,7 +10,7 @@ use Sabberworm\CSS\Value\RuleValueList;
 use Sabberworm\CSS\Value\Size;
 
 // Stwórz globalne ustawienia dla parserów CSS
-$GLOBALS['settings'] = Settings::create()->beStrict();
+$GLOBALS['CSS_CHECKER_PARSER_SETTINGS'] = Settings::create()->beStrict();
 
 class DifferenceReport {
   public int $differenceScore = 0;
@@ -42,7 +43,13 @@ class DifferenceReport {
  *   SCORE_MISSING_PROPERTY => Punkty dodawane za właściwości zdefiniowane tylko we wzrocu
  *   SCORE_ADDITIONAL_PROPERTY => Punkty dodawane za właściwości tylko w kodzie do sprawdzenia
  *   SCORE_DIFFERENT_VALUE => Punkty dodawane za różne wartości właściwości
+ *   SCORE_ADDITIONAL_SELECTOR => Punkty dodawane za selektor tylko w kodzie do sprawdzenia
+ *   SCORE_MISSING_SELECTOR => Punkty dodawane za selektor zdefiniowany tylko we wzorcu
  * Wartość zero oznacza, że te różnice nie będą dodawane do wzorca.
+ *
+ * Uwaga! Jeżeli SCORE_DIFFERENT_VALUE będzie większe od SCORE_MISSING_PROPERTY 
+ *        lub SCORE_ADDITIONAL_PROPERTY to możliwe są nieprawidłowe powiązania
+ *        między selektorami wzorca oraz kodu do sprawdzenia.
  */
 const SCORE_MISSING_PROPERTY = 20;
 const SCORE_ADDITIONAL_PROPERTY = 10;
@@ -312,7 +319,7 @@ function expand_4_corners(Rule $inputRule) {
 }
 
 // Stwórz tablice procesorów dla typowo używanych właściwości
-$GLOBALS['ruleProcessors'] = [
+$GLOBALS['CSS_CHECKER_RULE_PROCESSORS'] = [
   'margin' => 'expand_4_sides',
   'padding' => 'expand_4_sides',
   'border-width' => 'expand_4_sides',
@@ -322,12 +329,12 @@ $GLOBALS['ruleProcessors'] = [
 ];
 
 function call_rule_processor(Rule $rule) {
-  if(!key_exists($rule->getRule(), $GLOBALS['ruleProcessors'])) {
+  if(!key_exists($rule->getRule(), $GLOBALS['CSS_CHECKER_RULE_PROCESSORS'])) {
     // Domyślnie dodajemy zasade do rezultatu.
     return [ $rule ];
   }
 
-  $callback = $GLOBALS['ruleProcessors'][$rule->getRule()];
+  $callback = $GLOBALS['CSS_CHECKER_RULE_PROCESSORS'][$rule->getRule()];
   if(is_string($callback)) {
     return call_user_func($callback, $rule);
   } else if(is_array($callback)) {
@@ -336,7 +343,7 @@ function call_rule_processor(Rule $rule) {
 }
 
 function convert_css(string $cssText): ElementTracker {
-  $templateParser = new Parser($cssText, $GLOBALS['settings']);
+  $templateParser = new Parser($cssText, $GLOBALS['CSS_CHECKER_PARSER_SETTINGS']);
   $templateDoc = $templateParser->parse();
   $template = new ElementTracker();
 
