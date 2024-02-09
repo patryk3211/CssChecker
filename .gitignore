@@ -1,2 +1,5 @@
 vendor
 
+flake.lock
+flake.nix
+
