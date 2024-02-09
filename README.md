@@ -7,6 +7,7 @@ Plik `src/checker.php` zawiera wszystkie potrzebne deklaracje, należy dołączy
 Aby porównać dwa pliki CSS użyć trzeba funkcji `check_css` do której podajemy dwa argumenty:
  - Oczekiwany kod CSS
  - Kod CSS do sprawdzenia
+
 W razie błędu funkcja zwraca typ `string`, w którym zawarty jest powód błędu. Po udanym porównaniu funkcja zwraca typ `DifferenceReport` w którym zawarte są
 wszelkie różnice pomiędzy podanym kodem oraz suma punktów różnicy.
 
