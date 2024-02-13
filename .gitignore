@@ -1,4 +1,5 @@
 vendor
+src/pliki
 
 flake.lock
 flake.nix

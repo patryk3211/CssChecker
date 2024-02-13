@@ -11,6 +11,9 @@ use Sabberworm\CSS\Value\Size;
 
 // Stwórz globalne ustawienia dla parserów CSS
 $GLOBALS['CSS_CHECKER_PARSER_SETTINGS'] = Settings::create()->beStrict();
+if(!isset($GLOBALS['CSS_CHECKER_ALLOW_ADDITIONAL_PROPERTIES'])) {
+  $GLOBALS['CSS_CHECKER_ALLOW_ADDITIONAL_PROPERTIES'] = true;
+}
 
 class DifferenceReport {
   public int $differenceScore = 0;
@@ -19,15 +22,26 @@ class DifferenceReport {
    */
   public array $messages = [];
 
-  public function add_difference(int $score, string $message): void {
+  public array $errorCount = [];
+
+  public function add_difference(int $score, string $message, string $type): void {
     $this->differenceScore += $score;
     array_push($this->messages, $message);
+    if(!isset($this->errorCount[$type])) {
+      $this->errorCount[$type] = 0;
+    }
+    $this->errorCount[$type] += 1;
   }
 
   public function print_report(): void {
-    echo '<ul>';
+    echo 'Messages: <ul>';
     foreach($this->messages as $msg) {
       echo '<li>'.$msg.'</li>';
+    }
+    echo '</ul>';
+    echo 'Error Counts: <ul>';
+    foreach($this->errorCount as $key => $value) {
+      echo '<li>'.$key.' = '.$value.'</li>';
     }
     echo '</ul>';
   }
@@ -35,6 +49,19 @@ class DifferenceReport {
   public function append_report(DifferenceReport $report): void {
     $this->differenceScore += $report->differenceScore;
     array_push($this->messages, ...$report->messages);
+    foreach($report->errorCount as $key => $value) {
+      if(!isset($this->errorCount[$key])) {
+        $this->errorCount[$key] = 0;
+      }
+      $this->errorCount[$key] += $value;
+    }
+  }
+
+  public function get_error_count(string $key): int {
+    if(!isset($this->errorCount[$key])) {
+      return 0;
+    }
+    return $this->errorCount[$key];
   }
 }
 
@@ -83,13 +110,13 @@ class ElementNode {
       }
       if($foundRule == null) {
         // Punkty dla właściwości nieistniejących we wzrocu
-        if(SCORE_ADDITIONAL_PROPERTY != 0)
-          $report->add_difference(SCORE_ADDITIONAL_PROPERTY, 'Element ('.$this->selector.') posiada dodatkową właściwość ('.$rule->getRule().')');
+        if(SCORE_ADDITIONAL_PROPERTY != 0 && !$GLOBALS['CSS_CHECKER_ALLOW_ADDITIONAL_PROPERTIES'])
+          $report->add_difference(SCORE_ADDITIONAL_PROPERTY, 'Element ('.$this->selector.') posiada dodatkową właściwość ('.$rule->getRule().')', 'AdditionalProperty');
       } else {
         if(strval($rule->getValue()) != strval($foundRule->getValue())) {
           // Punkty dla właściwości o innych wartościach
           if(SCORE_DIFFERENT_VALUE != 0)
-            $report->add_difference(SCORE_DIFFERENT_VALUE, 'Właściwość elementu ('.$this->selector.') jest inna ('.$rule->getValue().') niż oczekiwana ('.$foundRule->getValue().')');
+            $report->add_difference(SCORE_DIFFERENT_VALUE, 'Właściwość elementu ('.$this->selector.') jest inna ('.$rule->getValue().') niż oczekiwana ('.$foundRule->getValue().')', 'DifferentValue');
         }
         // Usuń znalezioną właściwość
         array_splice($otherRules, $foundIndex, 1);
@@ -98,7 +125,7 @@ class ElementNode {
 
     if(SCORE_MISSING_PROPERTY != 0) {
       foreach($otherRules as $missingRule) {
-        $report->add_difference(SCORE_MISSING_PROPERTY, 'W elemencie ('.$this->selector.') brakuje właściwości zdefiniowanej we wzrocu ('.$missingRule->getRule().')');
+        $report->add_difference(SCORE_MISSING_PROPERTY, 'W elemencie ('.$this->selector.') brakuje właściwości zdefiniowanej we wzrocu ('.$missingRule->getRule().')', 'MissingProperty');
       }
     }
     return $report;
@@ -143,7 +170,7 @@ class ElementTracker {
         $selectedElement = null;
         $bestReport = null;
         for($i = 0; $i < count($otherElements); ++$i) {
-          if(!$element->isBlockElement)
+          if(!$otherElements[$i]->isBlockElement)
             continue;
           $report = $element->calculate_difference($otherElements[$i]);
           if($bestReport == null || $report->differenceScore < $bestReport->differenceScore) {
@@ -154,8 +181,8 @@ class ElementTracker {
         }
         if($selectedElement == null) {
           // Nie znaleziono selektora blokowego we wzrocu
-          if(SCORE_ADDITIONAL_SELECTOR != 0)
-            $differenceReport->add_difference(SCORE_ADDITIONAL_SELECTOR, 'Dodatkowy selektor styli ('.$element->selector.') w kodzie');
+          if(SCORE_ADDITIONAL_SELECTOR != 0 && !$GLOBALS['CSS_CHECKER_ALLOW_ADDITIONAL_PROPERTIES'])
+            $differenceReport->add_difference(SCORE_ADDITIONAL_SELECTOR, 'Dodatkowy selektor styli ('.$element->selector.') w kodzie', 'AdditionalSelector');
         } else {
           $differenceReport->append_report($bestReport);
           array_splice($otherElements, $selectedIndex, 1);
@@ -172,8 +199,8 @@ class ElementTracker {
           }
         }
         if($selectedElement == null) {
-          if(SCORE_ADDITIONAL_SELECTOR != 0)
-            $differenceReport->add_difference(SCORE_ADDITIONAL_SELECTOR, 'Dodatkowy selektor styli ('.$element->selector.') w kodzie');
+          if(SCORE_ADDITIONAL_SELECTOR != 0 && !$GLOBALS['CSS_CHECKER_ALLOW_ADDITIONAL_PROPERTIES'])
+            $differenceReport->add_difference(SCORE_ADDITIONAL_SELECTOR, 'Dodatkowy selektor styli ('.$element->selector.') w kodzie', 'AdditionalSelector');
         } else {
           $report = $element->calculate_difference($selectedElement);
           $differenceReport->append_report($report);
@@ -185,7 +212,7 @@ class ElementTracker {
     // Pozostałe selektory zostają uznane jako brakujące w kodzie
     if(SCORE_MISSING_SELECTOR != 0) {
       foreach($otherElements as $missingElement) {
-        $differenceReport->add_difference(SCORE_MISSING_SELECTOR, 'Brakujący selektor styli ('.$missingElement->selector.')');
+        $differenceReport->add_difference(SCORE_MISSING_SELECTOR, 'Brakujący selektor styli ('.$missingElement->selector.')', 'MissingSelector');
       }
     }
 
@@ -263,7 +290,7 @@ function expand_4_sides(Rule $inputRule) {
 }
 
 function expand_4_corners(Rule $inputRule) {
-  // Rozbija jedną właściwość na cztery używając dopisków strony (left, right, top, bottom).
+  // Rozbija jedną właściwość na cztery używając dopisków rogów (top-left, top-right, bottom-right, bottom-left).
   $ruleName = $inputRule->getRule();
   $ruleValue = $inputRule->getValue();
   $ruleSuffix = '';
@@ -361,12 +388,16 @@ function convert_css(string $cssText): ElementTracker {
   return $template;
 }
 
-function check_css(string $templateText, string $cssText): DifferenceReport|string {
+function check_css(string|ElementTracker $template, string|ElementTracker $css): DifferenceReport|string {
   try {
-    $template = convert_css($templateText);
+    if(is_string($template)) {
+      $template = convert_css($template);
+    }
     try {
-      $code = convert_css($cssText);
-      $report = $code->compare($template);
+      if(is_string($css)) {
+        $css = convert_css($css);
+      }
+      $report = $css->compare($template);
       return $report;
     } catch(SourceException $e) {
       return '<h2>Błąd w podanym kodzie</h2>'.$e->getMessage();
